@@ -27,6 +27,8 @@ import org.openmuc.j60870.ConnectionEventListener;
 import org.openmuc.j60870.IeNormalizedValue;
 import org.openmuc.j60870.IeQualifierOfInterrogation;
 import org.openmuc.j60870.IeQualifierOfSetPointCommand;
+import org.openmuc.j60870.IeScaledValue;
+import org.openmuc.j60870.IeShortFloat;
 import org.openmuc.j60870.IeTime56;
 import org.openmuc.j60870.internal.cli.CliParameter;
 import org.openmuc.j60870.internal.cli.CliParameterBuilder;
@@ -58,7 +60,7 @@ import org.openmuc.j60870.internal.cli.StringCliParameter;
  *
  */
 
-public class Controller {
+public class SensorController {
 
 	static JButton bforward, bbackward, binterrogation, bstop, bquit, bclock, bactibarrier;
 	static JFrame frame;
@@ -77,10 +79,58 @@ public class Controller {
     //Listen the response given by the server
     private static class ClientEventListener implements ConnectionEventListener {
 
-        @Override
-        public void newASdu(ASdu aSdu) {
-            System.out.println("\nReceived ASDU:\n" + aSdu);
-        }
+        /*
+	  * ASDU's informations received by the server 
+	  */            
+	 @Override
+	 public void newASdu(ASdu aSdu) {
+	     try {
+		 boolean do_default=false;
+		 switch (aSdu.getTypeIdentification()) {
+		     
+		     // received the answer to interrogation command (short float value)
+		     case M_ME_NC_1:			
+			//value in which the activation flags are stored
+			IeShortFloat distance_received = (IeShortFloat) aSdu.getInformationObjects()[0].getInformationElements()[0][0];
+			System.out.println("Received measured distance:"+Float.toString(distance_received.getValue()));	
+			
+			break;
+			
+		 // interrogation command 
+		    case C_IC_NA_1:
+			if (aSdu.getCauseOfTransmission()==CauseOfTransmission.ACTIVATION_CON)
+			    System.out.println("Received confirmation of activation order");			
+			else
+			    do_default=true;
+			break;
+			
+
+		    // Action command
+		    case C_SE_NA_1://activation floating point command
+			if (aSdu.getCauseOfTransmission()==CauseOfTransmission.ACTIVATION_CON)
+			    System.out.println("Received confirmation of activation order");			
+			else
+			    do_default=true;
+			break;
+
+		     case C_CS_NA_1:
+			if (aSdu.getCauseOfTransmission()==CauseOfTransmission.ACTIVATION_CON)
+			    System.out.println("Received confirmation of activation order");			
+			else
+			    do_default=true;
+			break;
+
+		     default:
+			do_default=true;
+			break;
+		 }
+		 if (do_default)
+		     System.out.println("Got unknown request: " + aSdu + "\n");
+	     } catch (Exception e) {
+		 System.out.println("Will quit listening for commands on connection because of error: \"" + e.getMessage() + "\".");
+	     } 
+
+	 }
 
         @Override
         public void connectionClosed(IOException e) {
@@ -150,7 +200,7 @@ public class Controller {
     	JButton binterrogation = new JButton("Interrogation");
     	binterrogation.addActionListener(new ActionListener(){
 			public void actionPerformed(java.awt.event.ActionEvent e){
-				System.out.println("** Sending general interrogation command ** \n");
+				System.out.println("** Sending general interrogation command **");
                 try {
 					connection.interrogation(commonAddrParam.getValue(), CauseOfTransmission.ACTIVATION,
 					        new IeQualifierOfInterrogation(20));
@@ -168,7 +218,7 @@ public class Controller {
     	JButton bclock = new JButton("Synchronization");
     	bclock.addActionListener(new ActionListener(){
 			public void actionPerformed(java.awt.event.ActionEvent e){
-				 System.out.println("** Sending synchronize clocks command. **  \n");
+				 System.out.println("** Sending synchronize clocks command. ** ");
                     try {
 						connection.synchronizeClocks(commonAddrParam.getValue(), new IeTime56(System.currentTimeMillis()));
 					} catch (IOException e1) {
@@ -182,7 +232,7 @@ public class Controller {
     	JButton b_on = new JButton("LED ON");
     	b_on.addActionListener(new ActionListener(){
 			public void actionPerformed(java.awt.event.ActionEvent e){
-				System.out.println("** Sending 'Forward' command. ** \n");
+				System.out.println("** Sending 'LED ON' command. **");
             	try {
 					connection.setNormalizedValueCommand(commonAddrParam.getValue(), 
 							CauseOfTransmission.ACTIVATION, 2, new IeNormalizedValue(1), 
@@ -197,7 +247,7 @@ public class Controller {
     	JButton b_off = new JButton("LED OFF");
     	b_off.addActionListener(new ActionListener(){
 			public void actionPerformed(java.awt.event.ActionEvent e){
-				System.out.println("** Sending 'Backward' command. ** \n");
+				System.out.println("** Sending 'LED OFF' command. **");
             	try {
             		connection.setNormalizedValueCommand(commonAddrParam.getValue(), 
             				CauseOfTransmission.ACTIVATION, 2, new IeNormalizedValue(-1), 
@@ -212,7 +262,7 @@ public class Controller {
 //    	JButton bstop = new JButton("Stop");
 //    	bstop.addActionListener(new ActionListener(){
 //			public void actionPerformed(java.awt.event.ActionEvent e){
-//				System.out.println("** Sending Stop command. ** \n");
+//				System.out.println("** Sending Stop command. **");
 //            	try {
 //            		connection.setNormalizedValueCommand(commonAddrParam.getValue(), 
 //            				CauseOfTransmission.ACTIVATION, 2, new IeNormalizedValue(0), 
@@ -237,7 +287,7 @@ public class Controller {
 //    	JButton bactibarrier = new JButton("Activate Automatic Barrier");
 //    	bactibarrier.addActionListener(new ActionListener(){
 //			public void actionPerformed(java.awt.event.ActionEvent e){
-//				System.out.println("** Sending 'Activate Automatic Barrier' command. ** \n");
+//				System.out.println("** Sending 'Activate Automatic Barrier' command. **");
 //            	try {
 //            		connection.setNormalizedValueCommand(commonAddrParam.getValue(), 
 //            				CauseOfTransmission.ACTIVATION, 3, new IeNormalizedValue(1), 

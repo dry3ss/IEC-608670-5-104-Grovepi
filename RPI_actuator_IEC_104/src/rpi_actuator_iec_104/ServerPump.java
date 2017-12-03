@@ -1,5 +1,8 @@
 
-package rpi_sensors_iec_104;
+package rpi_actuator_iec_104;
+
+import pumps_control.Pump;
+
 
 /*
  * This file is part of j60870.
@@ -18,12 +21,7 @@ import java.rmi.RemoteException;
 import java.util.concurrent.TimeoutException;
 
 
-import org.iot.raspberry.grovepi.GrovePi;
-import org.iot.raspberry.grovepi.pi4j.GrovePi4J;
-
-import org.iot.raspberry.grovepi.GroveDigitalIn;
-import org.iot.raspberry.grovepi.GroveDigitalOut;
-import org.iot.raspberry.grovepi.devices.GroveUltrasonicRanger;
+import com.pi4j.io.gpio.RaspiPin;
 
 import org.openmuc.j60870.ASdu;
 import org.openmuc.j60870.CauseOfTransmission;
@@ -31,19 +29,28 @@ import org.openmuc.j60870.Connection;
 import org.openmuc.j60870.ConnectionEventListener;
 import org.openmuc.j60870.IeNormalizedValue;
 import org.openmuc.j60870.IeQuality;
+import org.openmuc.j60870.IeScaledValue;
 import org.openmuc.j60870.IeShortFloat;
 import org.openmuc.j60870.InformationElement;
 import org.openmuc.j60870.InformationObject;
 import org.openmuc.j60870.Server;
 import org.openmuc.j60870.ServerEventListener;
 import org.openmuc.j60870.TypeId;
+import pumps_control.ThreePumpsMessageBuilder;
+import pumps_control.ThreePumpsMessageInterface;
+import pumps_control.ThreePumpsMessageInterpreter;
 
-public class ServerSensor {
+public class ServerPump {
 
-    static GrovePi grovePi;
-    static GroveDigitalOut led ;//led on D4
-    static GroveUltrasonicRanger ranger;//range on d3
- 
+    static Pump pump1;
+    static Pump pump2;
+    static Pump pump3;
+    
+    //builder for the messages that have to be sent
+    static protected ThreePumpsMessageBuilder builder= new ThreePumpsMessageBuilder();
+    //states we will use to store values
+    static protected ThreePumpsMessageInterface.ThreePumpsStates states=new ThreePumpsMessageInterface.ThreePumpsStates();
+    
      public class ServerListener implements ServerEventListener  {
       
       
@@ -68,51 +75,53 @@ public class ServerSensor {
                      
                      // interrogation command
                      case C_IC_NA_1:
-                        double distance = ranger.get();
-                        float sensor_dist_float=(float) distance;
+                        connection.sendConfirmation(aSdu);
+			ThreePumpsMessageInterface.ThreePumpsStates states=new ThreePumpsMessageInterface.ThreePumpsStates();
+			states.state_pump_1=pump1.getState();
+			states.state_pump_2=pump2.getState();
+			states.state_pump_3=pump3.getState();
+			builder.setMessagePumpState(states);
+			short status=builder.getMessage();
             
-                         connection.sendConfirmation(aSdu);
-                         System.out.println("Got interrogation command. Will send measured distance value.\n");
+                         System.out.println("Got interrogation command. Will send pump states: "+ states.toString() +"\n");
  
-                         connection.send(new ASdu(TypeId.M_ME_NC_1, true, CauseOfTransmission.REQUEST, false, false,
+                         connection.send(new ASdu(TypeId.M_ME_NB_1, true, CauseOfTransmission.REQUEST, false, false,
                                  0, aSdu.getCommonAddress(),
                                  new InformationObject[] { new InformationObject(1, new InformationElement[][] 
                                  {
-                                         { new IeShortFloat(sensor_dist_float), new IeQuality(true, true, true, true, true) }
+                                         { new IeScaledValue(status), new IeQuality(false, false, false, false, false) }
                                  }) }));
                         break;
                         
                     // Action command
-                    case C_SE_NA_1:
+                    case C_SE_NB_1://scaled command
                     	connection.sendConfirmation(aSdu);
                     	
-                    	//Gets the Normalized Value and the Information Object Address
-                    	IeNormalizedValue normalizedValue = (IeNormalizedValue) aSdu.getInformationObjects()[0].getInformationElements()[0][0];
+                    	//Information Object Address
+                    	
                 	int informationObjectAddress = aSdu.getInformationObjects()[0].getInformationObjectAddress();
                 		
-                        // led action
+                        // pump_action
                         if(informationObjectAddress == 2){
-
-                                // ON action
-                                if (normalizedValue.getUnnormalizedValue() == 1){
-                                        System.out.println("Got LED ON command");
-                                        led.set(true);
-                                }
-
-                                // OFF action
-                                if (normalizedValue.getUnnormalizedValue() == -1){
-                                        System.out.println("Got LED OFF command");
-                                        led.set(false);
-                                }
+                            //value in which the activation flags are stored
+                            IeScaledValue scaledValue = (IeScaledValue) aSdu.getInformationObjects()[0].getInformationElements()[0][0];
+                            //let's convert the received bytes into the states that our pumps should have now
+                            states=ThreePumpsMessageInterpreter.getStatesFromMsg((short)scaledValue.getUnnormalizedValue());
+                            System.out.println("Received pump request: " + states.toString()+"\n");
+                            pump1.setState(states.state_pump_1);
+			    pump2.setState(states.state_pump_2);
+			    pump3.setState(states.state_pump_3);
                         } 
                     	break;
                       
                      // Clock command (Implemented by Pr.Fraunhofer) 
                      case C_CS_NA_1:
                       connection.sendConfirmation(aSdu);  
+                    	break;
                       
                      default:
                          System.out.println("Got unknown request: " + aSdu + ". Will not confirm it.\n");
+                    	break;
                      }
  
                  } catch (EOFException e) {
@@ -172,41 +181,26 @@ public class ServerSensor {
  
     public static void main(String[] args) throws RemoteException, MalformedURLException, NotBoundException {  
         try {
-            grovePi= new GrovePi4J();      
-            led = grovePi.getDigitalOut(4);//led on D4
-            ranger = new GroveUltrasonicRanger(grovePi, 3);//range on d3
+            pump1= new Pump(RaspiPin.GPIO_16,RaspiPin.GPIO_18,RaspiPin.GPIO_22);
+            pump2= new Pump(RaspiPin.GPIO_23,RaspiPin.GPIO_21,RaspiPin.GPIO_19);
+            pump3= new Pump(RaspiPin.GPIO_15,RaspiPin.GPIO_13,RaspiPin.GPIO_11);
             Runtime.getRuntime().addShutdownHook(new Thread()//graceful shutdown in case of CTRL-C  among others       
             {
                 @Override
                 public void run()
                 {
                    try {
-                    led.set(false);
+                    pump1.stop();
+                    pump2.stop();
+                    pump3.stop();
                     } catch (Exception e)
                     {
-                        System.out.println(e.getMessage());
+                        System.out.println("ERROR: "+e.getMessage());
                     }
-                    System.out.println("Shutdown hook ran!");
-                    
-                    
-                    
-                    
-                         
-//                    int i=0;
-//                    while (i<1000) {
-//                        double distance = ranger.get();
-//                        System.out.println("sensor value"+Double.toString(distance));
-//                        led.set(true);
-//                        Thread.sleep(500);
-//                        led.set(false);
-//                        Thread.sleep(500);
-//                        i++;
-//                    }        
-//                    led.set(false);
-                    
+                    System.out.println("Shutdown hook ran!");  
                 }
             });
-            new ServerSensor().start();
+            new ServerPump().start();
         } catch (Exception e)
         {
             System.out.println("Could not start Grovepi and ServerSensor:\n"+e.getMessage());
