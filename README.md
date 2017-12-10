@@ -11,6 +11,6 @@ For simplicity a copy of the .jar files of those libraries along with there resp
 It is recommended to follow the tutorial at https://www.dexterindustries.com/GrovePi/programming/grovepi-programming-java-maven/setting-computer-raspberry-grovepi-java/ 
 to set everything up properly so as to be able to compile and execute code from a remote computer directly on the RPi ( the sensors server app for example ) using netbeans
 
-#/!\ if you have a PI4J version mismatch error:
-You need to download PI4J 1.2 SNAPSHOT  here (pi4j-1.2-SNAPSHOT.deb) http://pi4j.com/download.html 
-Then install it following the "Offline/Manual" method here http://pi4j.com/install.html#OfflineManual
+/!\ if you have a PI4J version mismatch error:
+- Download PI4J 1.2 SNAPSHOT  here (pi4j-1.2-SNAPSHOT.deb) http://pi4j.com/download.html 
+- Install it on the Raspberry Pi following the "Offline/Manual" method here http://pi4j.com/install.html#OfflineManual
