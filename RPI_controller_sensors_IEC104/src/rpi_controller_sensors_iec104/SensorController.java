@@ -37,7 +37,6 @@ import org.openmuc.j60870.internal.cli.CliParser;
 import org.openmuc.j60870.internal.cli.IntCliParameter;
 import org.openmuc.j60870.internal.cli.StringCliParameter;
 
-   
 
 /*
  * Copyright 2014-17 Fraunhofer ISE
@@ -312,6 +311,7 @@ public class SensorController {
     	panel_motor.add(b_off);
     	//panel_motor.add(bstop);
     	panel_motor.add(bquit);
+	
 
     }
 

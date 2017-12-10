@@ -171,7 +171,8 @@ public class ServerSensor {
      private int connectionIdCounter = 1;
  
     public static void main(String[] args) throws RemoteException, MalformedURLException, NotBoundException {  
-        try {
+        
+	try {
             grovePi= new GrovePi4J();      
             led = grovePi.getDigitalOut(4);//led on D4
             ranger = new GroveUltrasonicRanger(grovePi, 3);//range on d3
