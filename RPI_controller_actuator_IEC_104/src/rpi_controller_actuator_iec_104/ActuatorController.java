@@ -87,7 +87,7 @@ public class ActuatorController {
     }
 	
 	//Initialization of Host and Port parameters
-    private static final StringCliParameter hostParam = new CliParameterBuilder("-h").buildStringParameter("host", "192.168.1.46");
+    private static final StringCliParameter hostParam = new CliParameterBuilder("-h").buildStringParameter("host", "192.168.20.11");
     private static final IntCliParameter portParam = new CliParameterBuilder("-p")
             .setDescription("The port to connect to.").buildIntParameter("port", 2404);
     private static final IntCliParameter commonAddrParam = new CliParameterBuilder("-ca")

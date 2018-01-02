@@ -58,10 +58,12 @@ public class ServerPump {
  
              private final Connection connection;
              private final int connectionId;
+             private boolean is_to_be_shutdown_after_disconnection;
  
              public ConnectionListener(Connection connection, int connectionId) {
                  this.connection = connection;
                  this.connectionId = connectionId;
+                 this.is_to_be_shutdown_after_disconnection=false;                 
              }
              
              /*
@@ -73,6 +75,15 @@ public class ServerPump {
  
                      switch (aSdu.getTypeIdentification()) {
                      
+                     // Single command => USED TO STOP PROPERLY THE SERVER in our case
+                     case C_SC_NA_1:
+                        connection.sendConfirmation(aSdu);
+                        System.out.println("Got end server command. Will stop gracefully after next disconnection \n");
+                        is_to_be_shutdown_after_disconnection=true;
+                        break;                   
+                         
+                        
+                        
                      // interrogation command
                      case C_IC_NA_1:
                         connection.sendConfirmation(aSdu);
@@ -137,6 +148,12 @@ public class ServerPump {
              @Override
              public void connectionClosed(IOException e) {
                  System.out.println("Connection (" + connectionId + ") was closed. " + e.getMessage());
+                 
+                 if(is_to_be_shutdown_after_disconnection)                     
+                 {
+                     System.out.println("is_to_be_shutdown_after_disconnection was set, will stop the server now.");                     
+                     System.exit(0);
+                 }
              }
  
          }
@@ -179,28 +196,58 @@ public class ServerPump {
  
      private int connectionIdCounter = 1;
  
+     
+    public static void shutdownHook()
+    {
+        try {
+            pump1.stop(); } catch (Exception e)
+        {
+            System.out.println("ERROR: "+e.getMessage());
+        }
+        try {    pump2.stop(); } catch (Exception e)
+        {
+            System.out.println("ERROR: "+e.getMessage());
+        }
+        try {    pump3.stop(); } catch (Exception e)
+        {
+            System.out.println("ERROR: "+e.getMessage());
+        }
+        try {    Pump.gpio.shutdown(); } catch (Exception e)
+        {
+            System.out.println("ERROR: "+e.getMessage());
+        }
+        try {    Thread.sleep(1000); } catch (Exception e)
+        {
+            System.out.println("ERROR: "+e.getMessage());
+        }
+       
+        System.out.println("Shutdown hook ran!"); 
+    }
     public static void main(String[] args) throws RemoteException, MalformedURLException, NotBoundException {  
         try {
-            pump1= new Pump(RaspiPin.GPIO_16,RaspiPin.GPIO_18,RaspiPin.GPIO_22);
-            pump2= new Pump(RaspiPin.GPIO_23,RaspiPin.GPIO_21,RaspiPin.GPIO_19);
-            pump3= new Pump(RaspiPin.GPIO_15,RaspiPin.GPIO_13,RaspiPin.GPIO_11);
+            
+            // pump1 : HARDWARE NB: 16, 18 , 22
+            // pump2 : HARDWARE NB: 23, 21 , 19
+            // pump3 : HARDWARE NB: 15, 13 , 11
+            
+            
+            
+            pump1= new Pump(RaspiPin.GPIO_04,RaspiPin.GPIO_05,RaspiPin.GPIO_06);
+            pump2= new Pump(RaspiPin.GPIO_14,RaspiPin.GPIO_13,RaspiPin.GPIO_12);
+            pump3= new Pump(RaspiPin.GPIO_03,RaspiPin.GPIO_02,RaspiPin.GPIO_00);
+            pump1.stop();
+            pump2.stop();
+            pump3.stop();
             Runtime.getRuntime().addShutdownHook(new Thread()//graceful shutdown in case of CTRL-C  among others       
             {
                 @Override
                 public void run()
                 {
-                   try {
-                    pump1.stop();
-                    pump2.stop();
-                    pump3.stop();
-                    } catch (Exception e)
-                    {
-                        System.out.println("ERROR: "+e.getMessage());
-                    }
-                    System.out.println("Shutdown hook ran!");  
+                   shutdownHook();
                 }
             });
-            new ServerPump().start();
+           new ServerPump().start();
+            Thread.sleep(3000);
         } catch (Exception e)
         {
             System.out.println("Could not start Grovepi and ServerSensor:\n"+e.getMessage());

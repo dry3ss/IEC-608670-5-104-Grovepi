@@ -16,7 +16,11 @@ import com.pi4j.io.gpio.Pin;
  * @author Will
  */
 public class Pump {
-    public static final GpioController gpio = GpioFactory.getInstance(); 
+    public static final GpioController gpio;
+    
+    static{
+        gpio= GpioFactory.getInstance(); 
+    }
     
     protected final GpioPinDigitalOutput pin_f;
     protected final GpioPinDigitalOutput pin_b;
@@ -46,15 +50,19 @@ public class Pump {
     
     public Pump(Pin pin_forward,Pin pin_backwards,Pin pin_enable)
     {
+        
+        
         // provision gpio pins as output pins and turn them off
-        pin_f=gpio.provisionDigitalOutputPin(pin_forward, "MyLED", PinState.LOW);
-        pin_b=gpio.provisionDigitalOutputPin(pin_backwards, "MyLED", PinState.LOW);
-        pin_e=gpio.provisionDigitalOutputPin(pin_enable, "MyLED", PinState.LOW);
+        pin_f=gpio.provisionDigitalOutputPin(pin_forward, "forward", PinState.LOW);
+        pin_b=gpio.provisionDigitalOutputPin(pin_backwards, "backwards", PinState.LOW);
+        pin_e=gpio.provisionDigitalOutputPin(pin_enable, "enable", PinState.LOW);
         
         // set shutdown state for this pin
         pin_f.setShutdownOptions(true, PinState.LOW);
         pin_b.setShutdownOptions(true, PinState.LOW);
         pin_e.setShutdownOptions(true, PinState.LOW);
+
+
     }
     
     public void forward()

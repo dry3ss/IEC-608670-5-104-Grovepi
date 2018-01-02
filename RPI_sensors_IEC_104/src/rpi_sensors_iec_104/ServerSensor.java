@@ -51,10 +51,12 @@ public class ServerSensor {
  
              private final Connection connection;
              private final int connectionId;
+             private boolean is_to_be_shutdown_after_disconnection;
  
              public ConnectionListener(Connection connection, int connectionId) {
                  this.connection = connection;
                  this.connectionId = connectionId;
+                 is_to_be_shutdown_after_disconnection=false;
              }
              
              /*
@@ -65,6 +67,15 @@ public class ServerSensor {
                  try {
  
                      switch (aSdu.getTypeIdentification()) {
+                         
+                         
+                     
+                     // Single command => USED TO STOP PROPERLY THE SERVER in our case
+                     case C_SC_NA_1:
+                        connection.sendConfirmation(aSdu);
+                        System.out.println("Got end server command. Will stop gracefully after next disconnection \n");
+                        is_to_be_shutdown_after_disconnection=true;
+                        break;    
                      
                      // interrogation command
                      case C_IC_NA_1:
@@ -128,6 +139,12 @@ public class ServerSensor {
              @Override
              public void connectionClosed(IOException e) {
                  System.out.println("Connection (" + connectionId + ") was closed. " + e.getMessage());
+                 
+                 if(is_to_be_shutdown_after_disconnection)                     
+                 {
+                     System.out.println("is_to_be_shutdown_after_disconnection was set, will stop the server now.");                     
+                     System.exit(0);
+                 }
              }
  
          }
@@ -188,23 +205,6 @@ public class ServerSensor {
                         System.out.println(e.getMessage());
                     }
                     System.out.println("Shutdown hook ran!");
-                    
-                    
-                    
-                    
-                         
-//                    int i=0;
-//                    while (i<1000) {
-//                        double distance = ranger.get();
-//                        System.out.println("sensor value"+Double.toString(distance));
-//                        led.set(true);
-//                        Thread.sleep(500);
-//                        led.set(false);
-//                        Thread.sleep(500);
-//                        i++;
-//                    }        
-//                    led.set(false);
-                    
                 }
             });
             new ServerSensor().start();

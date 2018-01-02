@@ -5,6 +5,10 @@
  */
 package rpi_fulll_controller;
 
+import java.awt.event.ActionListener;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+
 
 
 /**
@@ -55,13 +59,23 @@ public class SensorToActuatorAutomaticController {
 	
     }
     
+    public void printWithName(String msg)
+    {
+        System.out.println("(SensorToActuatorAutomaticController:) "+msg);
+    }
+    
+    
+    
+    
     public void setLatestSensorLevel(float new_level,int sensor_nb)
     {
+        printWithName("setLatestSensorLevel "+Float.toString(new_level)+" from "+Float.toString(sensor_nb));
 	SSCM_sensor_values_pairs[sensor_nb].setLatestSensorLevels(new_level);
     }
     
     public void resetSSCMPair(int sensor_nb)
     {
+        printWithName("resetSSCMPair "+Integer.toString(sensor_nb));
 	SSCM_sensor_values_pairs[sensor_nb].reset();
     }
     
@@ -70,18 +84,22 @@ public class SensorToActuatorAutomaticController {
     {
 	if(sccm == null || assigned_id <0)
 	    return;
+        printWithName("registerSCCM with id "+Integer.toString(assigned_id));
+        SSCM_sensor_values_pairs[assigned_id].setSscm(sccm);
 	sccm.registerSensorDataCallback(this, assigned_id);
     }
     public void unregisterSCCM(SensorControllerConnectionManager sccm)
     {
 	if(sccm == null )
 	    return;
+        printWithName("unregisterSCCM with id "+Integer.toString(sccm.getIdSensorDataCallback()));
 	sccm.resetAndResignSensorDataCallback();
     }
     public void unregisterSCCM(int assigned_id)
     {
 	if( assigned_id<0 )
 	    return;
+        printWithName("unregisterSCCM with id "+Integer.toString(assigned_id));
 	SSCM_sensor_values_pairs[assigned_id].getSscm().resetAndResignSensorDataCallback();
     }
     
@@ -89,15 +107,21 @@ public class SensorToActuatorAutomaticController {
     {
 	for(int i=0; i<SSCM_sensor_values_pairs.length;i++)
 	{
+            printWithName("unregisterSCCM with id "+Integer.toString(SSCM_sensor_values_pairs[i].getSscm().getIdSensorDataCallback()));
 	    SSCM_sensor_values_pairs[i].getSscm().resetAndResignSensorDataCallback();
 	}
     }
     
+    
+    
+    //CONSTRUCTOR
     public SensorToActuatorAutomaticController(ActuatorControllerConnectionManager aacm_ )
     {
 	aacm=aacm_;
 	work_to_do=false;
 	SSCM_sensor_values_pairs= new Pair_SSCM_SensorValue[2];
+        for(int i=0;i<SSCM_sensor_values_pairs.length;i++)
+            SSCM_sensor_values_pairs[i]=new Pair_SSCM_SensorValue();
     }
     
     
@@ -166,6 +190,29 @@ public class SensorToActuatorAutomaticController {
     }
 
 
+    //INTERFACE 
+    public void addButtonsToPannel(JPanel panel)
+    {
+	//"Start_regulating" Button
+    	JButton bstart = new JButton("Start_regulating");
+    	bstart.addActionListener(new ActionListener(){
+	    public void actionPerformed(java.awt.event.ActionEvent e){
+		startRegulatingLevel(18,1);
+	    }
+	});
+    	
+    	//"Stop_regulating" Button 
+    	JButton bstop = new JButton("Stop_regulating");
+    	bstop.addActionListener(new ActionListener(){
+	    public void actionPerformed(java.awt.event.ActionEvent e){
+		stopRegulatingLevel();
+	    }	
+	});
+    	
+    	//Add buttons on the dashboard
+    	panel.add(bstart);
+    	panel.add(bstop);
+    }
 
 
 }

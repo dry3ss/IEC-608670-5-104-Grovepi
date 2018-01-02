@@ -13,6 +13,7 @@ import org.openmuc.j60870.CauseOfTransmission;
 import org.openmuc.j60870.Connection;
 import org.openmuc.j60870.ConnectionEventListener;
 import org.openmuc.j60870.IeQualifierOfInterrogation;
+import org.openmuc.j60870.IeSingleCommand;
 import org.openmuc.j60870.IeTime56;
 import org.openmuc.j60870.internal.cli.IntCliParameter;
 
@@ -55,7 +56,7 @@ public abstract class ControllerConnectionManager
     public void sendSynchronizeClock()
     {
 	
-	if(connection!=null)
+	if(connection==null)
 	    return;
 	printWithName("** Sending synchronize clocks command. ** ");
 	try {
@@ -91,6 +92,20 @@ public abstract class ControllerConnectionManager
 	
     }
     
+    public void sendStopServer()
+    {        
+        if(connection==null)
+	    return;
+	printWithName("** Sending Shutdown server command **");
+	try {
+		connection.singleCommand(commonAddrParam.getValue(),
+                        CauseOfTransmission.DEACTIVATION,
+                        0, new IeSingleCommand(false,0,false));
+	} catch (IOException e1) {
+		e1.printStackTrace();
+	}    
+    }
+    
     //INTERFACE 
     public void addButtonsToPannel(JPanel panel)
     {
@@ -116,12 +131,23 @@ public abstract class ControllerConnectionManager
 	    public void actionPerformed(java.awt.event.ActionEvent e){
 		sendCloseConnection();
 	    }	
+	});
+        
+        
+        
+        //"Stop server" Button
+    	JButton bstop = new JButton("Stop server afterwards");
+    	bstop.addActionListener(new ActionListener(){
+	    public void actionPerformed(java.awt.event.ActionEvent e){
+                sendStopServer();
+	    }	
 	}); 
     	
     	//Add buttons on the dashboard
     	panel.add(binterrogation);
     	panel.add(bclock);
 	panel.add(bquit);
+        panel.add(bstop);
     }
     
 }

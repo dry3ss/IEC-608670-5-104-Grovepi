@@ -50,6 +50,14 @@ public class ActuatorControllerConnectionManager
 	 try {
 	     boolean do_default=false;
 	     switch (aSdu.getTypeIdentification()) {
+                 
+                 
+                 
+                 
+                    
+                case C_SC_NA_1:
+                        System.out.println("Got end server command confirmation. Server will stop gracefully after next disconnection \n");
+                        break;
 
 		 // received the answer to interrogation command (scaled value)
 		 case M_ME_NB_1:			
@@ -112,7 +120,7 @@ public class ActuatorControllerConnectionManager
 //SENDING
     public void sendStopAll()
     {
-	if(connection!=null)
+	if(connection==null)
 	    return;
 	printWithName("** Sending 'PUMPS OFF' command. **");	
         try {
@@ -128,7 +136,7 @@ public class ActuatorControllerConnectionManager
     }
     public void sendForwardAll()
     {
-	if(connection!=null)
+	if(connection==null)
 	    return;
 	printWithName("** Sending 'PUMPS OFF' command. **");	
         try {
@@ -144,7 +152,7 @@ public class ActuatorControllerConnectionManager
     }
     public void sendBackwardsAll()
     {
-	if(connection!=null)
+	if(connection==null)
 	    return;
 	printWithName("** Sending 'PUMPS OFF' command. **");	
         try {
@@ -169,7 +177,7 @@ public class ActuatorControllerConnectionManager
     
     protected  void sendPumpStatesCommand(ThreePumpsMessageInterface.ThreePumpsStates states) throws IOException
     {
-	if(connection!=null)
+	if(connection==null)
 	    return;
 	builder.setMessagePumpState(states);
 	short command=builder.getMessage();

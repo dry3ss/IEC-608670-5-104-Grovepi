@@ -62,7 +62,10 @@ public class SensorControllerConnectionManager
     }
     
     
-    
+    public int getIdSensorDataCallback()
+    {
+        return id_sensor_data_callback;
+    }
     
 //CONSTRUCTOR
     public SensorControllerConnectionManager(String name_,IntCliParameter commonAddrParam_)
@@ -89,6 +92,10 @@ public class SensorControllerConnectionManager
 		    printWithName("Received measured distance:"+Float.toString(distance_received.getValue()));
 		    callbackSaac(distance_received.getValue());
 		    break;
+                    
+                case C_SC_NA_1:
+                        System.out.println("Got end server command confirmation. Server will stop gracefully after next disconnection \n");
+                        break;
 
 	     // interrogation command 
 		case C_IC_NA_1:
@@ -142,7 +149,7 @@ public class SensorControllerConnectionManager
 //SENDING
     public void sendLedOff()
     {
-	if(connection!=null)
+	if(connection==null)
 	    return;
 	printWithName("** Sending 'LED OFF' command. **");
 	try {
@@ -156,7 +163,7 @@ public class SensorControllerConnectionManager
     
     public void sendLedOn()
     {
-	if(connection!=null)
+	if(connection==null)
 	    return;
 	printWithName("** Sending 'LED ON' command. **");
 	try {

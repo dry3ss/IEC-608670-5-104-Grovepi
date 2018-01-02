@@ -117,7 +117,7 @@ public class Main {
     //SENSOR
     
     	//IP Address initialization
-	host_param_sensor=getNewHostParameter("192.168.1.46");
+	host_param_sensor=getNewHostParameter("192.168.10.11");
 	port_param_sensor=getNewPortParameter(2404);
 	common_addr_param_sensor=getNewCommonAddressParameter(1);
 	
@@ -151,7 +151,7 @@ public class Main {
     //ACTUATOR
     
     	//IP Address initialization
-	host_param_actuator=getNewHostParameter("192.168.1.30");
+	host_param_actuator=getNewHostParameter("192.168.20.11");
 	port_param_actuator=getNewPortParameter(2404);
 	common_addr_param_actuator=getNewCommonAddressParameter(1);
 	
@@ -179,14 +179,21 @@ public class Main {
 	if(connection_with_actuator && connection_with_sensor)
 	{
 	    saac.registerSCCM(sccm, 0);
-	    //saac.startRegulatingLevel(20, 2);
+	    JPanel panel__m = new JPanel();
+	    saac.addButtonsToPannel(panel__m);
+	    frame.add(panel__m, BorderLayout.CENTER);
 	}
 	
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
 		//clean up all the callbacks
-		saac.unregisterSCCMs();	
+                try{
+                    saac.unregisterSCCMs();	
+                }catch (Exception e)
+		{
+		    System.out.println("Exception with  saac.unregisterSCCMs(): "+e.getMessage());
+		}
 		
 		//there shouldn't be any exception, but we dont want anything
 		//to stop us from properly closing should it still happen
