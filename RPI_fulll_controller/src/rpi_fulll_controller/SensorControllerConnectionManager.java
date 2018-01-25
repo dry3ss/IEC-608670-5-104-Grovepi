@@ -12,7 +12,9 @@ package rpi_fulll_controller;
 
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import javax.swing.Box;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import org.openmuc.j60870.ASdu;
 import org.openmuc.j60870.CauseOfTransmission;
@@ -27,11 +29,12 @@ public class SensorControllerConnectionManager
 {
 
     protected int id_sensor_data_callback;
-    protected SensorToActuatorAutomaticController saac_for_callback;
+    protected SensorToActuatorAutomaticControllerInterface saac_for_callback;    
+    protected JLabel current_level ;
     
     //CALLBACK MANAGEMENT
     
-    public void registerSensorDataCallback(SensorToActuatorAutomaticController new_saac,int new_id)
+    public void registerSensorDataCallback(SensorToActuatorAutomaticControllerInterface new_saac,int new_id)
     {
 	if(new_id <0 || new_saac ==null)
 	    return;
@@ -50,7 +53,7 @@ public class SensorControllerConnectionManager
     {
 	//if a callback was already present, we resign it
 	if(hasValidCallback())
-	    saac_for_callback.resetSSCMPair(id_sensor_data_callback);
+	    saac_for_callback.resetSCCMPair(id_sensor_data_callback);
 	saac_for_callback=null;
 	id_sensor_data_callback=-1;	
     }
@@ -68,11 +71,12 @@ public class SensorControllerConnectionManager
     }
     
 //CONSTRUCTOR
-    public SensorControllerConnectionManager(String name_,IntCliParameter commonAddrParam_)
+    public SensorControllerConnectionManager(IntCliParameter commonAddrParam_)
     {
-	super( name_,commonAddrParam_);
+	super("Sensor",commonAddrParam_);
 	id_sensor_data_callback=-1;
 	saac_for_callback=null;
+        current_level= new JLabel("Current_level");
     }
 
 //LISTENING       
@@ -89,18 +93,23 @@ public class SensorControllerConnectionManager
 		 case M_ME_NC_1:			
 		    //value in which the activation flags are stored
 		    IeShortFloat distance_received = (IeShortFloat) aSdu.getInformationObjects()[0].getInformationElements()[0][0];
-		    printWithName("Received measured distance:"+Float.toString(distance_received.getValue()));
+		    //printWithName("Received measured distance:"+Float.toString(distance_received.getValue()));
 		    callbackSaac(distance_received.getValue());
+                    current_level.setText("Current level: "+distance_received.getValue());
 		    break;
                     
                 case C_SC_NA_1:
-                        System.out.println("Got end server command confirmation. Server will stop gracefully after next disconnection \n");
-                        break;
+                    if (aSdu.getCauseOfTransmission()==CauseOfTransmission.ACTIVATION_CON)
+                        printWithName("Got end server command confirmation. Server will stop gracefully after next disconnection \n");	
+		    else
+			do_default=true;
+                    break;
 
 	     // interrogation command 
 		case C_IC_NA_1:
 		    if (aSdu.getCauseOfTransmission()==CauseOfTransmission.ACTIVATION_CON)
-			printWithName("Received confirmation of activation order");			
+			//printWithName("Received confirmation of activation order:interrogation command ");
+                        break;
 		    else
 			do_default=true;
 		    break;
@@ -109,14 +118,8 @@ public class SensorControllerConnectionManager
 		// Action command
 		case C_SE_NA_1://activation floating point command
 		    if (aSdu.getCauseOfTransmission()==CauseOfTransmission.ACTIVATION_CON)
-			printWithName("Received confirmation of activation order");			
-		    else
-			do_default=true;
-		    break;
-
-		 case C_CS_NA_1:
-		    if (aSdu.getCauseOfTransmission()==CauseOfTransmission.ACTIVATION_CON)
-			printWithName("Received confirmation of activation order");			
+			//printWithName("Received confirmation of activation order:Action command");
+                        break;			
 		    else
 			do_default=true;
 		    break;
@@ -151,6 +154,7 @@ public class SensorControllerConnectionManager
     {
 	if(connection==null)
 	    return;
+        printNewLine();
 	printWithName("** Sending 'LED OFF' command. **");
 	try {
 	connection.setNormalizedValueCommand(commonAddrParam.getValue(), 
@@ -165,6 +169,7 @@ public class SensorControllerConnectionManager
     {
 	if(connection==null)
 	    return;
+        printNewLine();
 	printWithName("** Sending 'LED ON' command. **");
 	try {
 	connection.setNormalizedValueCommand(commonAddrParam.getValue(), 
@@ -185,6 +190,8 @@ public class SensorControllerConnectionManager
     @Override
     public void addButtonsToPannel(JPanel panel)
     {	
+    	panel.add(current_level);
+        panel.add(Box.createHorizontalGlue());
 	super.addButtonsToPannel(panel);
 	
     	//"ON" Button
@@ -209,6 +216,7 @@ public class SensorControllerConnectionManager
     	panel.add(b_on);
 	panel.add(b_off);
     }
+    
     
 }
 

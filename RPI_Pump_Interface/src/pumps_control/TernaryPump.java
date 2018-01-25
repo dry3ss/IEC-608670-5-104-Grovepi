@@ -15,7 +15,7 @@ import com.pi4j.io.gpio.Pin;
  *
  * @author Will
  */
-public class Pump {
+public class TernaryPump {
     public static final GpioController gpio;
     
     static{
@@ -26,29 +26,43 @@ public class Pump {
     protected final GpioPinDigitalOutput pin_b;
     protected final GpioPinDigitalOutput pin_e;    
     
-    public enum PUMPSTATE {
+    public enum TERNARY_PUMP_STATE {
         FORWARD((short)1), BACKWARDS((short)2),OFF((short)0),UNKNOWN((short)5);
 
         final private short numVal;
 
-        PUMPSTATE(short numVal) {
+        TERNARY_PUMP_STATE(short numVal) {
             this.numVal = numVal;
         }
-        PUMPSTATE()
+        TERNARY_PUMP_STATE()
         {
             this.numVal=0;
         }
-        PUMPSTATE(PUMPSTATE i)
+        TERNARY_PUMP_STATE(TERNARY_PUMP_STATE i)
         {
             this.numVal=i.getNumVal();
         }
 
+        public String toString()
+        {
+            switch(this)
+            {
+                case FORWARD:
+                    return new String("F");
+                case BACKWARDS:
+                    return new String("B");
+                case OFF:
+                    return new String("O");
+                default:
+                    return new String("UNKNOWN");
+            }
+        }
         public short getNumVal() {
             return numVal;
         }
     }
     
-    public Pump(Pin pin_forward,Pin pin_backwards,Pin pin_enable)
+    public TernaryPump(Pin pin_forward,Pin pin_backwards,Pin pin_enable)
     {
         
         
@@ -104,19 +118,19 @@ public class Pump {
     }
     
     
-    public PUMPSTATE getState()
+    public TERNARY_PUMP_STATE getState()
     {
         if(!isWorking())
-            return PUMPSTATE.OFF;
+            return TERNARY_PUMP_STATE.OFF;
         if(isForward())
-            return PUMPSTATE.FORWARD;
+            return TERNARY_PUMP_STATE.FORWARD;
         if(isBackwards())
-            return PUMPSTATE.BACKWARDS;
+            return TERNARY_PUMP_STATE.BACKWARDS;
         else
-            return PUMPSTATE.UNKNOWN;        
+            return TERNARY_PUMP_STATE.UNKNOWN;        
     }
 
-    public void setState(PUMPSTATE state)
+    public void setState(TERNARY_PUMP_STATE state)
     {
 	switch (state)
 	{

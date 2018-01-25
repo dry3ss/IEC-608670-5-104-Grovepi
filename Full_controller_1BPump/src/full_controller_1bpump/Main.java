@@ -3,38 +3,34 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package rpi_fulll_controller;
+package full_controller_1bpump;
 
 import java.awt.BorderLayout;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
-
-
 import org.openmuc.j60870.ClientConnectionBuilder;
 import org.openmuc.j60870.Connection;
 import org.openmuc.j60870.internal.cli.CliParameterBuilder;
 import org.openmuc.j60870.internal.cli.IntCliParameter;
 import org.openmuc.j60870.internal.cli.StringCliParameter;
 import quick_logger.LockedLogger;
-
-
+import rpi_fulll_controller.ActuatorControllerConnectionManager;
+import rpi_fulll_controller.ControllerConnectionManager;
+import rpi_fulll_controller.SensorControllerConnectionManager;
+import rpi_fulll_controller.SensorToActuatorAutomaticController;
 
 /**
  *
- * @author Will
+ * @author will
  */
 public class Main {
-
+    
     
     
     private static StringCliParameter getNewHostParameter( String IP_address)
@@ -103,22 +99,6 @@ public class Main {
     
     public static void main(String[] args) {
         
-        
-        
-    LockedLogger ll= new LockedLogger("/home/will/PFE/log","essai");
-    ll.log("lala");
-    ll.log("lolo");
-    ll.log("lolo");
-    ll.log("lolo");
-    ll.log("lolo");
-    ll.log("lolo");
-    ll.log("lolo");
-    ll.log("lili");
-    ll.log("lolo");
-    if(true)
-        System.exit(0);
-        
-    	
     StringCliParameter host_param_sensor;
     IntCliParameter port_param_sensor ;    
     IntCliParameter common_addr_param_sensor;
@@ -217,16 +197,16 @@ public class Main {
 	
 	//Starting connectio
 	String name_co_actuator="actuator";
-	ActuatorControllerConnectionManager accm=new ActuatorControllerConnectionManager(common_addr_param_actuator);
+	OneBPumpControllerConnectionManager obpccm=new OneBPumpControllerConnectionManager(common_addr_param_actuator);
         
 	boolean connection_with_actuator=false;
 	
-	if( null != (connection_actuator=startConnection(host_param_actuator,port_param_actuator,accm)))
+	if( null != (connection_actuator=startConnection(host_param_actuator,port_param_actuator,obpccm)))
 	{
 	    connection_with_actuator=true;
 	    JPanel panel_a = new JPanel();            
             panel_a.setLayout(new GridLayout(3, 3));
-	    accm.addButtonsToPannel(panel_a);
+	    obpccm.addButtonsToPannel(panel_a);
             
             TitledBorder border = new TitledBorder("Actuator");
             border.setTitleJustification(TitledBorder.CENTER);
@@ -234,17 +214,17 @@ public class Main {
 
             panel_a.setBorder(border);            
 	    frame.add(panel_a, BorderLayout.SOUTH);  
-	    accm.printWithName("Pannel added");
+	    obpccm.printWithName("Pannel added");
 	}
 	else
 	{
-	    accm.printWithName("Pannel NOT added");
+	    obpccm.printWithName("Pannel NOT added");
 	}
         
     // SensorToActuatorAutomaticController
     
 	//create it and link it with the ActuatorControllerConnectionManager
-	SensorToActuatorAutomaticController saac=new SensorToActuatorAutomaticController(accm);
+	SensorTo1BPumpAutomaticController saac=new SensorTo1BPumpAutomaticController(obpccm);
 	
 	if(connection_with_actuator)
 	{
@@ -279,7 +259,7 @@ public class Main {
 		
 		//there shouldn't be any exception, but we dont want anything
 		//to stop us from properly closing should it still happen
-		    accm.sendCloseConnection();
+		    obpccm.sendCloseConnection();
 		    sccm.sendCloseConnection();
 		    sccm2.sendCloseConnection();		
             }
@@ -291,5 +271,6 @@ public class Main {
 	
 
     }
+    
     
 }

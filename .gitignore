@@ -1,5 +1,4 @@
-﻿
-/RPI_actuator_IEC_104/nbproject/private/
+﻿/RPI_actuator_IEC_104/nbproject/private/
 /RPI_actuator_IEC_104/build/
 /RPI_actuator_IEC_104/dist/
 /RPI_Pump_Interface/nbproject/private/
@@ -9,3 +8,7 @@
 /RPI_controller_actuator_IEC_104/build/
 /RPI_fulll_controller/nbproject/private/
 /RPI_fulll_controller/build/
+/RPI_one_binary_pump_IEC_104/nbproject/private/
+/Full_controller_1BPump/nbproject/private/
+/Full_controller_1BPump/build/
+/Full_controller_1BPump/dist/

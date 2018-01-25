@@ -35,10 +35,10 @@ import org.openmuc.j60870.internal.cli.CliParseException;
 import org.openmuc.j60870.internal.cli.CliParser;
 import org.openmuc.j60870.internal.cli.IntCliParameter;
 import org.openmuc.j60870.internal.cli.StringCliParameter;
-import pumps_control.Pump;
-import pumps_control.ThreePumpsMessageBuilder;
-import pumps_control.ThreePumpsMessageInterface;
-import pumps_control.ThreePumpsMessageInterpreter;
+import pumps_control.TernaryPump;
+import pumps_control.ThreeTernaryPumpsMessageBuilder;
+import pumps_control.ThreeTernaryPumpsMessageInterface;
+import pumps_control.ThreeTernaryPumpsMessageInterpreter;
 
    
 
@@ -71,11 +71,11 @@ public class ActuatorController {
 	
 	
     //bulder for the messages that have to be sent
-    static protected ThreePumpsMessageBuilder builder= new ThreePumpsMessageBuilder();    
+    static protected ThreeTernaryPumpsMessageBuilder builder= new ThreeTernaryPumpsMessageBuilder();    
     //states we will use to store values
-    static protected ThreePumpsMessageInterface.ThreePumpsStates states=new ThreePumpsMessageInterface.ThreePumpsStates();
+    static protected ThreeTernaryPumpsMessageInterface.ThreeTernaryPumpsStates states=new ThreeTernaryPumpsMessageInterface.ThreeTernaryPumpsStates();
     
-    public static void sendPumpStatesCommand(ThreePumpsMessageInterface.ThreePumpsStates states) throws IOException
+    public static void sendPumpStatesCommand(ThreeTernaryPumpsMessageInterface.ThreeTernaryPumpsStates states) throws IOException
     {
 	builder.setMessagePumpState(states);
 	short command=builder.getMessage();
@@ -117,7 +117,7 @@ public class ActuatorController {
 			//value in which the activation flags are stored
 			IeScaledValue scaledValue = (IeScaledValue) aSdu.getInformationObjects()[0].getInformationElements()[0][0];
 			//let's convert the received bytes into the states that our pumps should have now
-			states=ThreePumpsMessageInterpreter.getStatesFromMsg((short)scaledValue.getUnnormalizedValue());
+			states=ThreeTernaryPumpsMessageInterpreter.getStatesFromMsg((short)scaledValue.getUnnormalizedValue());
 			System.out.println("Received pump states: " + states.toString());
 			break;
 			
@@ -259,10 +259,10 @@ public class ActuatorController {
 	    @Override
 	    public void actionPerformed(java.awt.event.ActionEvent e){
             	try {			
-			states=new ThreePumpsMessageInterface.ThreePumpsStates();
-			states.state_pump_1=Pump.PUMPSTATE.FORWARD;
-			states.state_pump_2=Pump.PUMPSTATE.FORWARD;
-			states.state_pump_3=Pump.PUMPSTATE.FORWARD;
+			states=new ThreeTernaryPumpsMessageInterface.ThreeTernaryPumpsStates();
+			states.state_pump_1=TernaryPump.TERNARY_PUMP_STATE.FORWARD;
+			states.state_pump_2=TernaryPump.TERNARY_PUMP_STATE.FORWARD;
+			states.state_pump_3=TernaryPump.TERNARY_PUMP_STATE.FORWARD;
 			sendPumpStatesCommand(states);
 			System.out.print("** Sending Motor command: "+states.toString()+" **\n");
 		    } catch (IOException e1) 
@@ -276,10 +276,10 @@ public class ActuatorController {
 	    @Override
 	    public void actionPerformed(java.awt.event.ActionEvent e){
             	try {
-			states=new ThreePumpsMessageInterface.ThreePumpsStates();
-			states.state_pump_1=Pump.PUMPSTATE.BACKWARDS;
-			states.state_pump_2=Pump.PUMPSTATE.BACKWARDS;
-			states.state_pump_3=Pump.PUMPSTATE.BACKWARDS;
+			states=new ThreeTernaryPumpsMessageInterface.ThreeTernaryPumpsStates();
+			states.state_pump_1=TernaryPump.TERNARY_PUMP_STATE.BACKWARDS;
+			states.state_pump_2=TernaryPump.TERNARY_PUMP_STATE.BACKWARDS;
+			states.state_pump_3=TernaryPump.TERNARY_PUMP_STATE.BACKWARDS;
 			sendPumpStatesCommand(states);
 			System.out.print("** Sending Motor command: "+states.toString()+" **\n");
 		    } catch (IOException e1) 
@@ -293,10 +293,10 @@ public class ActuatorController {
 	    @Override
 	    public void actionPerformed(java.awt.event.ActionEvent e){
             	try {
-			states=new ThreePumpsMessageInterface.ThreePumpsStates();
-			states.state_pump_1=Pump.PUMPSTATE.OFF;
-			states.state_pump_2=Pump.PUMPSTATE.OFF;
-			states.state_pump_3=Pump.PUMPSTATE.OFF;
+			states=new ThreeTernaryPumpsMessageInterface.ThreeTernaryPumpsStates();
+			states.state_pump_1=TernaryPump.TERNARY_PUMP_STATE.OFF;
+			states.state_pump_2=TernaryPump.TERNARY_PUMP_STATE.OFF;
+			states.state_pump_3=TernaryPump.TERNARY_PUMP_STATE.OFF;
 			sendPumpStatesCommand(states);
 			System.out.print("** Sending Motor command: "+states.toString()+" **\n");
 		    } catch (IOException e1) 
@@ -310,10 +310,10 @@ public class ActuatorController {
 	    @Override
 	    public void actionPerformed(java.awt.event.ActionEvent e){
             	try {
-			states=new ThreePumpsMessageInterface.ThreePumpsStates();
-			states.state_pump_1=Pump.PUMPSTATE.FORWARD;
-			states.state_pump_2=Pump.PUMPSTATE.OFF;
-			states.state_pump_3=Pump.PUMPSTATE.OFF;
+			states=new ThreeTernaryPumpsMessageInterface.ThreeTernaryPumpsStates();
+			states.state_pump_1=TernaryPump.TERNARY_PUMP_STATE.FORWARD;
+			states.state_pump_2=TernaryPump.TERNARY_PUMP_STATE.OFF;
+			states.state_pump_3=TernaryPump.TERNARY_PUMP_STATE.OFF;
 			sendPumpStatesCommand(states);
 			System.out.print("** Sending Motor command: "+states.toString()+" **\n");
 		    } catch (IOException e1) 
@@ -327,10 +327,10 @@ public class ActuatorController {
 	    @Override
 	    public void actionPerformed(java.awt.event.ActionEvent e){
             	try {
-			states=new ThreePumpsMessageInterface.ThreePumpsStates();
-			states.state_pump_1=Pump.PUMPSTATE.BACKWARDS;
-			states.state_pump_2=Pump.PUMPSTATE.OFF;
-			states.state_pump_3=Pump.PUMPSTATE.OFF;
+			states=new ThreeTernaryPumpsMessageInterface.ThreeTernaryPumpsStates();
+			states.state_pump_1=TernaryPump.TERNARY_PUMP_STATE.BACKWARDS;
+			states.state_pump_2=TernaryPump.TERNARY_PUMP_STATE.OFF;
+			states.state_pump_3=TernaryPump.TERNARY_PUMP_STATE.OFF;
 			sendPumpStatesCommand(states);
 			System.out.print("** Sending Motor command: "+states.toString()+" **\n");
 		    } catch (IOException e1) 

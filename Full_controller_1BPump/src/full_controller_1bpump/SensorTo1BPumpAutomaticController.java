@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package rpi_fulll_controller;
+package full_controller_1bpump;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -16,15 +16,17 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import pumps_control.TernaryPump;
-
-
+import rpi_fulll_controller.ActuatorControllerConnectionManager;
+import rpi_fulll_controller.SensorControllerConnectionManager;
+import pumps_control.BinaryPump.*;
+import rpi_fulll_controller.SensorToActuatorAutomaticControllerInterface;
 
 /**
  *
- * @author Will
+ * @author will
  */
-public class SensorToActuatorAutomaticController implements SensorToActuatorAutomaticControllerInterface{
-    protected ActuatorControllerConnectionManager accm;
+public class SensorTo1BPumpAutomaticController implements SensorToActuatorAutomaticControllerInterface{
+    protected OneBPumpControllerConnectionManager obpccm;
     protected boolean is_running;
     protected float desired_level;
     protected float precision;
@@ -43,12 +45,12 @@ public class SensorToActuatorAutomaticController implements SensorToActuatorAuto
     
     public static class RunnableSaaC implements Runnable
     {
-        protected SensorToActuatorAutomaticController ssac;
+        protected SensorTo1BPumpAutomaticController ssac;
         int timeout_ms;
         int ticks_bf_action;
         
-        TernaryPump.TERNARY_PUMP_STATE wished_decision;
-        TernaryPump.TERNARY_PUMP_STATE latest_decision;
+        BINARY_PUMP_STATE wished_decision;
+        BINARY_PUMP_STATE latest_decision;
         int ticks_since_last_decision;
         
         public RunnableSaaC()
@@ -62,8 +64,8 @@ public class SensorToActuatorAutomaticController implements SensorToActuatorAuto
         protected void resetwishedDirection()
         {
             ticks_since_last_decision=0;
-            latest_decision=TernaryPump.TERNARY_PUMP_STATE.OFF;
-            wished_decision=TernaryPump.TERNARY_PUMP_STATE.OFF;         
+            latest_decision=BINARY_PUMP_STATE.OFF;
+            wished_decision=BINARY_PUMP_STATE.OFF;         
         }
          
         @Override
@@ -81,11 +83,9 @@ public class SensorToActuatorAutomaticController implements SensorToActuatorAuto
                 //we do it now for the next iteration because the request-answer is slow
                 ssac.getFreshSensorInputs();
                 if(decision_lvl<min_accepted)
-                    wished_decision=TernaryPump.TERNARY_PUMP_STATE.FORWARD;
-                else if (decision_lvl> max_accepted)
-                    wished_decision=TernaryPump.TERNARY_PUMP_STATE.BACKWARDS;
+                    wished_decision=BINARY_PUMP_STATE.FORWARD;
                 else
-                    wished_decision=TernaryPump.TERNARY_PUMP_STATE.OFF;
+                    wished_decision=BINARY_PUMP_STATE.OFF;
                 mayActIfChangeNeeded();
                 try {
                     Thread.sleep(timeout_ms);
@@ -94,7 +94,7 @@ public class SensorToActuatorAutomaticController implements SensorToActuatorAuto
                     break;
                 }
             }
-            ssac.accm.sendStopAll();
+            ssac.obpccm.sendStop();
             ssac.is_running=false;
             ssac.setSlavesToSilence(false);
         }
@@ -118,20 +118,17 @@ public class SensorToActuatorAutomaticController implements SensorToActuatorAuto
             switch(wished_decision)
             {
                 case OFF:
-                    ssac.accm.sendStopAll();
+                    ssac.obpccm.sendStop();
                     break;
                 case FORWARD:
-                    ssac.accm.sendForwardAll();
-                    break;
-                case BACKWARDS:
-                    ssac.accm.sendBackwardsAll();
-                    break;                    
+                    ssac.obpccm.sendForward();
+                    break;               
             }
             latest_decision=wished_decision;
             ticks_since_last_decision=0;
         }
     
-        protected void setSaacOnceAndForAll(SensorToActuatorAutomaticController ssac_)
+        protected void setSaacOnceAndForAll(SensorTo1BPumpAutomaticController ssac_)
         {
             if(ssac==null)
                 ssac=ssac_;
@@ -202,9 +199,9 @@ public class SensorToActuatorAutomaticController implements SensorToActuatorAuto
     
        
     //CONSTRUCTOR
-    public SensorToActuatorAutomaticController(ActuatorControllerConnectionManager aacm_ )
+    public SensorTo1BPumpAutomaticController(OneBPumpControllerConnectionManager obpccm_ )
     {
-	accm=aacm_;
+	obpccm=obpccm_;
 	is_running=false;
 	SCCM_sensor_values_pairs= new Pair_SCCM_SensorValue[2];
         for(int i=0;i<SCCM_sensor_values_pairs.length;i++)
@@ -238,7 +235,7 @@ public class SensorToActuatorAutomaticController implements SensorToActuatorAuto
     {
         for(int i =0;i<SCCM_sensor_values_pairs.length;i++)
             SCCM_sensor_values_pairs[i].getSccm().setSilence(yes);
-        accm.setSilence(yes);
+        obpccm.setSilence(yes);
     }
     
     public void setLatestSensorLevel(float new_level,int sensor_nb)
@@ -453,5 +450,5 @@ public class SensorToActuatorAutomaticController implements SensorToActuatorAuto
         panel.add(panel_buttons);
     }
 
-
+    
 }

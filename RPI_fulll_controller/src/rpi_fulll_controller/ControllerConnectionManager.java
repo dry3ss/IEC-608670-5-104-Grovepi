@@ -7,6 +7,7 @@ package rpi_fulll_controller;
 
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import org.openmuc.j60870.CauseOfTransmission;
@@ -16,6 +17,7 @@ import org.openmuc.j60870.IeQualifierOfInterrogation;
 import org.openmuc.j60870.IeSingleCommand;
 import org.openmuc.j60870.IeTime56;
 import org.openmuc.j60870.internal.cli.IntCliParameter;
+import quick_logger.LockedLogger;
 
 /**
  *
@@ -24,17 +26,34 @@ import org.openmuc.j60870.internal.cli.IntCliParameter;
 public abstract class ControllerConnectionManager 
 	implements ConnectionEventListener {
     
-
+    
+    protected static int instance_counter=0;
+    protected LockedLogger locked_logger;
+    
     protected Connection connection;
     protected String name;
     protected IntCliParameter commonAddrParam;
+    
+    protected boolean silence;
 
+    public boolean isSilence() {
+        return silence;
+    }
+
+    public void setSilence(boolean silence) {
+        this.silence = silence;
+    }
+
+    
     
     public ControllerConnectionManager(String name_,IntCliParameter commonAddrParam_)
     {
-	name=name_;
+        instance_counter++;
+	name=name_+"_"+instance_counter;
+        locked_logger= new LockedLogger("/home/will/PFE/log",name);
 	connection=null;
 	commonAddrParam=commonAddrParam_;
+        silence=false;
     }
 
     public Connection getConnection() {
@@ -45,11 +64,16 @@ public abstract class ControllerConnectionManager
 	this.connection = connection;
     }
     
-    
+    public void printNewLine()
+    {
+        if(! silence)
+            System.out.println();
+    }   
     
     public void printWithName(String msg)
     {
-	 System.out.println(name+"::"+msg);
+        if(! silence)
+            System.out.println(name+"::"+msg);
     }
     
     //SEND
@@ -58,6 +82,7 @@ public abstract class ControllerConnectionManager
 	
 	if(connection==null)
 	    return;
+        printNewLine();
 	printWithName("** Sending synchronize clocks command. ** ");
 	try {
 		    connection.synchronizeClocks(commonAddrParam.getValue(), new IeTime56(System.currentTimeMillis()));
@@ -71,14 +96,12 @@ public abstract class ControllerConnectionManager
 	
 	if(connection==null)
 	    return;
+        printNewLine();
 	printWithName("** Sending general interrogation command **");
 	try {
 		connection.interrogation(commonAddrParam.getValue(), CauseOfTransmission.ACTIVATION,
 			new IeQualifierOfInterrogation(20));
-		Thread.sleep(2000);
 	} catch (IOException e1) {
-		e1.printStackTrace();
-	} catch (InterruptedException e1) {
 		e1.printStackTrace();
 	}
     }
@@ -87,15 +110,17 @@ public abstract class ControllerConnectionManager
     {
 	if(connection==null)
 	    return;
-	printWithName("** Closing connection. ** \n");
-	connection.close();	
-	
+        printNewLine();
+	printWithName("** Closing connection. **");
+	connection.close();
+        connection=null;
     }
     
     public void sendStopServer()
     {        
         if(connection==null)
 	    return;
+        printNewLine();
 	printWithName("** Sending Shutdown server command **");
 	try {
 		connection.singleCommand(commonAddrParam.getValue(),
@@ -109,6 +134,7 @@ public abstract class ControllerConnectionManager
     //INTERFACE 
     public void addButtonsToPannel(JPanel panel)
     {
+        
 	//"Interrogation" Button
     	JButton binterrogation = new JButton("Interrogation");
     	binterrogation.addActionListener(new ActionListener(){
@@ -144,10 +170,17 @@ public abstract class ControllerConnectionManager
 	}); 
     	
     	//Add buttons on the dashboard
+        
     	panel.add(binterrogation);
     	panel.add(bclock);
 	panel.add(bquit);
         panel.add(bstop);
     }
+
+    public String getName() {
+        return name;
+    }
+    
+    
     
 }

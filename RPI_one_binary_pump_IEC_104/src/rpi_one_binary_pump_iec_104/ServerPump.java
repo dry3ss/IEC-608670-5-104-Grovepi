@@ -1,7 +1,11 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package rpi_one_binary_pump_iec_104;
 
-package rpi_actuator_iec_104;
 
-import pumps_control.TernaryPump;
 
 
 /*
@@ -12,6 +16,9 @@ import pumps_control.TernaryPump;
  * way you like and without any restrictions.
  *
  */
+
+import pumps_control.BinaryPump;
+import pumps_control.BinaryPump.*;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -42,14 +49,10 @@ import pumps_control.ThreeTernaryPumpsMessageInterpreter;
 
 public class ServerPump {
 
-    static TernaryPump pump1;
-    static TernaryPump pump2;
-    static TernaryPump pump3;
+    static BinaryPump pump1;
     
-    //builder for the messages that have to be sent
-    static protected ThreeTernaryPumpsMessageBuilder builder= new ThreeTernaryPumpsMessageBuilder();
     //states we will use to store values
-    static protected ThreeTernaryPumpsMessageInterface.ThreeTernaryPumpsStates states=new ThreeTernaryPumpsMessageInterface.ThreeTernaryPumpsStates();
+    static protected BINARY_PUMP_STATE state=BINARY_PUMP_STATE.OFF;
     
      public class ServerListener implements ServerEventListener  {
       
@@ -87,14 +90,10 @@ public class ServerPump {
                      // interrogation command
                      case C_IC_NA_1:
                         connection.sendConfirmation(aSdu);
-			ThreeTernaryPumpsMessageInterface.ThreeTernaryPumpsStates states=new ThreeTernaryPumpsMessageInterface.ThreeTernaryPumpsStates();
-			states.state_pump_1=pump1.getState();
-			states.state_pump_2=pump2.getState();
-			states.state_pump_3=pump3.getState();
-			builder.setMessagePumpState(states);
-			short status=builder.getMessage();
+                        state=pump1.getState();
+			short status=state.getNumVal();
             
-                         System.out.println("Got interrogation command. Will send pump states: "+ states.toString() +"\n");
+                         System.out.println("Got interrogation command. Will send pump state: "+ state.toString() +"\n");
  
                          connection.send(new ASdu(TypeId.M_ME_NB_1, true, CauseOfTransmission.REQUEST, false, false,
                                  0, aSdu.getCommonAddress(),
@@ -116,12 +115,10 @@ public class ServerPump {
                         if(informationObjectAddress == 2){
                             //value in which the activation flags are stored
                             IeScaledValue scaledValue = (IeScaledValue) aSdu.getInformationObjects()[0].getInformationElements()[0][0];
-                            //let's convert the received bytes into the states that our pumps should have now
-                            states=ThreeTernaryPumpsMessageInterpreter.getStatesFromMsg((short)scaledValue.getUnnormalizedValue());
-                            System.out.println("Received pump request: " + states.toString()+"\n");
-                            pump1.setState(states.state_pump_1);
-			    pump2.setState(states.state_pump_2);
-			    pump3.setState(states.state_pump_3);
+                            //let's convert the received bytes into the state that our pumps should have now
+                            state=BINARY_PUMP_STATE.getStateFromVal((short)scaledValue.getUnnormalizedValue());
+                            System.out.println("Received pump request: " + state.toString()+"\n");
+                            pump1.setState(state);
                         } 
                     	break;
                       
@@ -204,15 +201,8 @@ public class ServerPump {
         {
             System.out.println("ERROR: "+e.getMessage());
         }
-        try {    pump2.stop(); } catch (Exception e)
-        {
-            System.out.println("ERROR: "+e.getMessage());
-        }
-        try {    pump3.stop(); } catch (Exception e)
-        {
-            System.out.println("ERROR: "+e.getMessage());
-        }
-        try {    TernaryPump.gpio.shutdown(); } catch (Exception e)
+        
+        try {    BinaryPump.gpio.shutdown(); } catch (Exception e)
         {
             System.out.println("ERROR: "+e.getMessage());
         }
@@ -232,12 +222,8 @@ public class ServerPump {
             
             
             
-            pump1= new TernaryPump(RaspiPin.GPIO_04,RaspiPin.GPIO_05,RaspiPin.GPIO_06);
-            pump2= new TernaryPump(RaspiPin.GPIO_14,RaspiPin.GPIO_13,RaspiPin.GPIO_12);
-            pump3= new TernaryPump(RaspiPin.GPIO_03,RaspiPin.GPIO_02,RaspiPin.GPIO_00);
+            pump1= new BinaryPump(RaspiPin.GPIO_04,RaspiPin.GPIO_06);
             pump1.stop();
-            pump2.stop();
-            pump3.stop();
             Runtime.getRuntime().addShutdownHook(new Thread()//graceful shutdown in case of CTRL-C  among others       
             {
                 @Override
@@ -266,3 +252,4 @@ public class ServerPump {
      }
 
 }
+

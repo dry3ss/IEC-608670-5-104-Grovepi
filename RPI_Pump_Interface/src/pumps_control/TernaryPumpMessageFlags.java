@@ -9,11 +9,11 @@ package pumps_control;
  *
  * @author Will
  */
-public class PumpMessageFlags
+public class TernaryPumpMessageFlags
     {
         protected boolean pump_enabled;
         protected boolean pump_forward;
-        PumpMessageFlags()
+        TernaryPumpMessageFlags()
         {
             pump_enabled=false;
             pump_forward=false;
@@ -32,7 +32,7 @@ public class PumpMessageFlags
             return !pump_forward && pump_enabled ;
         }
         
-        public void setState(Pump.PUMPSTATE state)
+        public void setState(TernaryPump.TERNARY_PUMP_STATE state)
         {
             switch (state)
             {
@@ -54,14 +54,14 @@ public class PumpMessageFlags
         }
         
         
-        public Pump.PUMPSTATE getState()
+        public TernaryPump.TERNARY_PUMP_STATE getState()
     {
         if(!isEnabled())
-            return Pump.PUMPSTATE.OFF;
+            return TernaryPump.TERNARY_PUMP_STATE.OFF;
         if(isForward())
-            return Pump.PUMPSTATE.FORWARD;
+            return TernaryPump.TERNARY_PUMP_STATE.FORWARD;
         else
-            return Pump.PUMPSTATE.BACKWARDS;
+            return TernaryPump.TERNARY_PUMP_STATE.BACKWARDS;
         //UNKNOWN state unrecognizable from here
     }
                 
