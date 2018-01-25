@@ -95,6 +95,7 @@ public class SensorControllerConnectionManager
 		    IeShortFloat distance_received = (IeShortFloat) aSdu.getInformationObjects()[0].getInformationElements()[0][0];
 		    //printWithName("Received measured distance:"+Float.toString(distance_received.getValue()));
 		    callbackSaac(distance_received.getValue());
+                    locked_logger.log(Float.toString(distance_received.getValue()));
                     current_level.setText("Current level: "+distance_received.getValue());
 		    break;
                     

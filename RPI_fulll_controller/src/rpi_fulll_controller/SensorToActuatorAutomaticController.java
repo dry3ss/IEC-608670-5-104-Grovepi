@@ -81,9 +81,9 @@ public class SensorToActuatorAutomaticController implements SensorToActuatorAuto
                 //we do it now for the next iteration because the request-answer is slow
                 ssac.getFreshSensorInputs();
                 if(decision_lvl<min_accepted)
-                    wished_decision=TernaryPump.TERNARY_PUMP_STATE.FORWARD;
-                else if (decision_lvl> max_accepted)
                     wished_decision=TernaryPump.TERNARY_PUMP_STATE.BACKWARDS;
+                else if (decision_lvl> max_accepted)
+                    wished_decision=TernaryPump.TERNARY_PUMP_STATE.FORWARD;
                 else
                     wished_decision=TernaryPump.TERNARY_PUMP_STATE.OFF;
                 mayActIfChangeNeeded();

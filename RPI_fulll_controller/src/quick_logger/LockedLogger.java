@@ -6,7 +6,6 @@
 package quick_logger;
 
 import java.io.IOException;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.locks.ReentrantLock;
@@ -16,7 +15,6 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 
 /**
  *
@@ -24,8 +22,9 @@ import java.util.logging.SimpleFormatter;
  */
 public class LockedLogger {
     private final ReentrantLock lock = new ReentrantLock();
-    private final Logger logger = Logger.getLogger(LockedLogger.class.getName());
-    private FileHandler fh;  
+    private Logger logger=null;
+    private FileHandler fh; 
+    private final String sFileName;
     
     class MyFormatter extends Formatter {
     // Create a DateFormat to format the logger timestamp.
@@ -47,14 +46,13 @@ public class LockedLogger {
 }
     
     
-    
-    
     public LockedLogger(String path_to_folder, String name_log)
     {
         fh=null;
+        String FileName = new SimpleDateFormat("dd-MMM-yyyy").format(new Date());
+        sFileName=path_to_folder+"//"+name_log+"__"+FileName+".txt";
+        logger = Logger.getLogger(sFileName);
         try {  
-            String sFileName = new SimpleDateFormat("dd-MMM-yyyy").format(new Date());
-            sFileName=path_to_folder+"//"+name_log+"__"+sFileName+".txt";
             // This block configure the logger with handler and formatter  
             fh = new FileHandler(sFileName,true);  
             fh.setLevel(Level.ALL);
@@ -72,6 +70,7 @@ public class LockedLogger {
         } catch (IOException e) {  
             e.printStackTrace();  
         }  
+            
     }
     
     public void log(String s)
@@ -84,6 +83,28 @@ public class LockedLogger {
             lock.unlock();
         }
     }
+    public void log(Level l,String s)
+    {
+        lock.lock();
+        try {
+            long time=System.currentTimeMillis();
+            logger.log(l, time+"\t"+s);        
+        } finally {
+            lock.unlock();
+        }
+    }
+    public void log(Level l,String s,Exception e)
+    {
+        lock.lock();
+        try {
+            long time=System.currentTimeMillis();
+            logger.log(l, time+"\t"+s,e);        
+        } finally {
+            lock.unlock();
+        }
+    }
+    
+    
     
     
 }

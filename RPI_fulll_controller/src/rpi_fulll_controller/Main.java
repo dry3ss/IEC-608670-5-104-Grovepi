@@ -104,7 +104,7 @@ public class Main {
     public static void main(String[] args) {
         
         
-        
+        /*
     LockedLogger ll= new LockedLogger("/home/will/PFE/log","essai");
     ll.log("lala");
     ll.log("lolo");
@@ -117,7 +117,7 @@ public class Main {
     ll.log("lolo");
     if(true)
         System.exit(0);
-        
+        */
     	
     StringCliParameter host_param_sensor;
     IntCliParameter port_param_sensor ;    
