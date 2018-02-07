@@ -135,7 +135,7 @@ public class Main {
     Connection connection_actuator;
     
     
-    //Graphic Interface
+    //Graphical Interface
     	JFrame frame = new JFrame("Dashboard");
     	frame.setSize(500, 500);
     	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -262,7 +262,7 @@ public class Main {
                 ok_for_pannel=true;            
             }
             
-            //if one of the sensor is online
+            //if one of the sensors is online
             if (ok_for_pannel)
             {
                 JPanel panel__m = new JPanel();

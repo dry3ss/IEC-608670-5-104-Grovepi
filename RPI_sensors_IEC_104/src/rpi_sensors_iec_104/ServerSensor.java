@@ -10,12 +10,28 @@ package rpi_sensors_iec_104;
  *
  */
 
+import arpdetox_lib.ARPDServer;
+import static arpdetox_lib.ARPDServer.ARDP_SLAVE_PORT;
+import arpdetox_lib.ARPDSlaveConsumerRunnable;
+import arpdetox_lib.IPInfoContainers;
+import arpdetox_lib.UDPServer;
 import java.io.EOFException;
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.InterfaceAddress;
 import java.net.MalformedURLException;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.security.InvalidParameterException;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 import org.iot.raspberry.grovepi.GrovePi;
@@ -186,10 +202,57 @@ public class ServerSensor {
      }
  
      private int connectionIdCounter = 1;
+     
+     
+    public static Inet4Address getMyTrueIP()
+    {
+        Inet4Address r=null;
+        try {
+            
+            Enumeration<NetworkInterface> physical_network_interfaces = NetworkInterface.getNetworkInterfaces();
+            while (physical_network_interfaces.hasMoreElements())
+            {
+                NetworkInterface ni = physical_network_interfaces.nextElement();
+                List<InterfaceAddress> list_interface_address = ni.getInterfaceAddresses();
+                for(InterfaceAddress ia : list_interface_address)
+                {
+                    InetAddress potential_address=ia.getAddress();
+                    if(potential_address!=null && potential_address.getClass() == Inet4Address.class)
+		    {
+			if(! potential_address.isLoopbackAddress() && ! potential_address.isLinkLocalAddress() )
+			    r= (Inet4Address) potential_address;
+		    }
+                }
+            }
+            
+        } catch (SocketException ex) {
+            Logger.getLogger(UDPServer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return r;
+    }
+     
  
     public static void main(String[] args) throws RemoteException, MalformedURLException, NotBoundException {  
         
 	try {
+            //ARPD slave server start:
+            byte[] password= "lala".getBytes();    
+            int common_port_slaves=ARDP_SLAVE_PORT;
+            
+            String my_addr=getMyTrueIP().getHostAddress();
+            System.out.println("starting ARPD server with ip: "+my_addr);
+            IPInfoContainers.SourceIPInfo s1_src_info= new IPInfoContainers.SourceIPInfo(my_addr,common_port_slaves);
+            IPInfoContainers.DestIPInfo s1_dst_info = new IPInfoContainers.DestIPInfo(my_addr,common_port_slaves);
+            
+            ARPDSlaveConsumerRunnable cr1= new ARPDSlaveConsumerRunnable();            
+            ARPDServer.ARPDServerSlave s1= new ARPDServer.ARPDServerSlave(s1_src_info,cr1);
+            
+            s1.setPasswd(password);
+            //s1.start();            
+            System.out.println("ARPD slave server started");
+            
+            
+            // IEC 104 sensor server start
             grovePi= new GrovePi4J();      
             led = grovePi.getDigitalOut(4);//led on D4
             ranger = new GroveUltrasonicRanger(grovePi, 3);//range on d3
@@ -199,8 +262,9 @@ public class ServerSensor {
                 public void run()
                 {
                    try {
+                    s1.close();
                     led.set(false);
-                    } catch (Exception e)
+                    } catch (IOException | InterruptedException e)
                     {
                         System.out.println(e.getMessage());
                     }
@@ -208,7 +272,7 @@ public class ServerSensor {
                 }
             });
             new ServerSensor().start();
-        } catch (Exception e)
+        } catch (IOException | InvalidParameterException e)
         {
             System.out.println("Could not start Grovepi and ServerSensor:\n"+e.getMessage());
         }

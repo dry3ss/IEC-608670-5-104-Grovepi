@@ -1,6 +1,11 @@
 
 package rpi_actuator_iec_104;
 
+import arpdetox_lib.ARPDServer;
+import static arpdetox_lib.ARPDServer.ARDP_SLAVE_PORT;
+import arpdetox_lib.ARPDSlaveConsumerRunnable;
+import arpdetox_lib.IPInfoContainers;
+import arpdetox_lib.UDPServer;
 import pumps_control.TernaryPump;
 
 
@@ -22,15 +27,23 @@ import java.util.concurrent.TimeoutException;
 
 
 import com.pi4j.io.gpio.RaspiPin;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.security.InvalidParameterException;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.openmuc.j60870.ASdu;
 import org.openmuc.j60870.CauseOfTransmission;
 import org.openmuc.j60870.Connection;
 import org.openmuc.j60870.ConnectionEventListener;
-import org.openmuc.j60870.IeNormalizedValue;
 import org.openmuc.j60870.IeQuality;
 import org.openmuc.j60870.IeScaledValue;
-import org.openmuc.j60870.IeShortFloat;
 import org.openmuc.j60870.InformationElement;
 import org.openmuc.j60870.InformationObject;
 import org.openmuc.j60870.Server;
@@ -196,6 +209,33 @@ public class ServerPump {
  
      private int connectionIdCounter = 1;
  
+    public static Inet4Address getMyTrueIP()
+    {
+        Inet4Address r=null;
+        try {
+            
+            Enumeration<NetworkInterface> physical_network_interfaces = NetworkInterface.getNetworkInterfaces();
+            while (physical_network_interfaces.hasMoreElements())
+            {
+                NetworkInterface ni = physical_network_interfaces.nextElement();
+                List<InterfaceAddress> list_interface_address = ni.getInterfaceAddresses();
+                for(InterfaceAddress ia : list_interface_address)
+                {
+                    InetAddress potential_address=ia.getAddress();
+                    if(potential_address!=null && potential_address.getClass() == Inet4Address.class)
+		    {
+			if(! potential_address.isLoopbackAddress() && ! potential_address.isLinkLocalAddress() )
+			    r= (Inet4Address) potential_address;
+		    }
+                }
+            }
+            
+        } catch (SocketException ex) {
+            Logger.getLogger(UDPServer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return r;
+    }
+     
      
     public static void shutdownHook()
     {
@@ -226,6 +266,27 @@ public class ServerPump {
     public static void main(String[] args) throws RemoteException, MalformedURLException, NotBoundException {  
         try {
             
+            //ARPD slave server start:
+            byte[] password= "lala".getBytes();    
+            int common_port_slaves=ARDP_SLAVE_PORT;
+            
+            String my_addr=getMyTrueIP().getHostAddress();
+            System.out.println("starting ARPD server with ip: "+my_addr);
+            IPInfoContainers.SourceIPInfo s1_src_info= new IPInfoContainers.SourceIPInfo(my_addr,common_port_slaves);
+            IPInfoContainers.DestIPInfo s1_dst_info = new IPInfoContainers.DestIPInfo(my_addr,common_port_slaves);
+            
+            ARPDSlaveConsumerRunnable cr1= new ARPDSlaveConsumerRunnable();            
+            ARPDServer.ARPDServerSlave s1= new ARPDServer.ARPDServerSlave(s1_src_info,cr1);
+            
+            s1.setPasswd(password);
+            s1.start();            
+            System.out.println("ARPD slave server started");
+            
+            
+            // IEC 104 pump server start
+            
+            
+            
             // pump1 : HARDWARE NB: 16, 18 , 22
             // pump2 : HARDWARE NB: 23, 21 , 19
             // pump3 : HARDWARE NB: 15, 13 , 11
@@ -243,12 +304,17 @@ public class ServerPump {
                 @Override
                 public void run()
                 {
+                    try {
+                        s1.close();
+                    } catch (InterruptedException | IOException ex) {
+                        Logger.getLogger(ServerPump.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                    shutdownHook();
                 }
             });
            new ServerPump().start();
             Thread.sleep(3000);
-        } catch (Exception e)
+        } catch (IOException | InterruptedException | InvalidParameterException e)
         {
             System.out.println("Could not start Grovepi and ServerSensor:\n"+e.getMessage());
         }
