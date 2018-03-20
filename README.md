@@ -8,7 +8,8 @@ This demonstrator makes the 3 RPi interact with the controller using the IEC-608
 
 Those are Netbeans projects.
 
-## I. Those apps uses the following external libraries:
+## I. Those apps uses the following libraries:
+#### External libraries
 - Openmuc j60870 is handling the IEC-608670-5-104 protocol ( https://www.openmuc.org/iec-60870-5-104/ )
 - Dexter Industries GrovePi is handling the interraction between the RPi and the sensors,leds... through the grovepi card ( https://github.com/DexterInd/GrovePi )
 - Pi4J is handling the IO on the RPi from the GPio pins through Java ( http://pi4j.com/ )
@@ -21,6 +22,9 @@ to set everything up properly so as to be able to compile and execute code from 
 /!\ if you have a PI4J version mismatch error:
 - Download PI4J 1.2 SNAPSHOT  here (pi4j-1.2-SNAPSHOT.deb) http://pi4j.com/download.html 
 - Install it on the Raspberry Pi following the "Offline/Manual" method here http://pi4j.com/install.html#OfflineManual
+
+#### Homemade library
+To launch the project as-is, you will need to download and link the project against ARPDetox_lib, which you can find here: https://github.com/dry3ss/ARP_detox . Otherwise if you don't want it, comment the code calling ARPDetox_lib's function in RPI_actuator_IEC_104_with_ARPD_included and RPI_sensors_IEC_104_with_ARPD_included (less than ~10 lines: the imports, the code starting up the server and the code stopping it properly)
 
 ## II. Instructions (for Netbeans)
 
