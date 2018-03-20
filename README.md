@@ -15,6 +15,7 @@ Those are Netbeans projects.
 - Pi4J is handling the IO on the RPi from the GPio pins through Java ( http://pi4j.com/ )
 
 **For simplicity a copy of the .jar files of those libraries along with there respective licenses have been provided in the "_ALL_external_libs_" directory.**
+If the software for the GrovePi is not yet installed on youor Raspberry, you need to follow this: https://www.dexterindustries.com/GrovePi/get-started-with-the-grovepi/setting-software/ to install it, and then this: https://www.dexterindustries.com/GrovePi/get-started-with-the-grovepi/updating-firmware/ to update the firmware (you will have an issue with the distance sensors if you don't).
 
 It is recommended to follow the tutorial at https://www.dexterindustries.com/GrovePi/programming/grovepi-programming-java-maven/setting-computer-raspberry-grovepi-java/ 
 to set everything up properly so as to be able to compile and execute code from a remote computer directly on the RPi ( the sensors server app for example ) using netbeans
